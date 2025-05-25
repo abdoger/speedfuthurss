@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>دردشة خاصة</title>
+</head>
+<body>
+    llllllllllllllllllll
+    <h2>غرفة الدردشة: {{ room_name }}</h2>
+    <div id="chat-log" style="height:300px; overflow-y:scroll; border:1px solid #ccc;"></div>
+    <input id="chat-message-input" type="text" size="100">
+    <button id="chat-message-submit">إرسال</button>
+
+    <script>
+        const roomName = "{{ room_name }}";
+        const userName = "{{ user.username }}";  // تأكد من تمرير المستخدم إلى القالب
+
+        // const chatSocket = new WebSocket(
+        //     'ws://' + window.location.host + '/ws/chat/' + roomName + '/'
+        // );
+
+        let chatSocket = new WebSocket("ws://localhost:8000/ws/chat/7/");
+
+        document.querySelector("#chat-message-submit").onclick = function() {
+            if (chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send("hello");
+            } else {
+                console.log("الاتصال غير جاهز");
+            }
+        };
+
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const chatLog = document.querySelector('#chat-log');
+            chatLog.innerHTML += '<b>' + data.sender + ':</b> ' + data.message + '<br>';
+            chatLog.scrollTop = chatLog.scrollHeight;
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('تم إغلاق الاتصال بالويب سوكيت بشكل غير متوقع');
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'sender': userName
+            }));
+            messageInputDom.value = '';
+        };
+    </script>
+</body>
+</html>
